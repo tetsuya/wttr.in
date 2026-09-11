@@ -727,6 +727,40 @@ You can now access your instance at `http://your-server:8080` (e.g. `http://your
 
 For production, create a systemd service. Cache and logs are stored under `/wttr.in/cache` and `/wttr.in/log`.
 
+## Deploying on Build
+
+[Build](https://build.io/) is a Heroku-compatible PaaS, so wttr.in deploys
+straight from git with the `bld` CLI.
+
+1. Create the app and add its git URL as a remote:
+
+   ```
+   bld apps:create wttr-in
+   git remote add bld "$(bld apps:info -a wttr-in -j | jq -r '.git_url')"
+   ```
+
+2. Add the three buildpacks — **the order matters**, since each one sets up the
+   toolchain the next depends on:
+
+   ```
+   bld buildpacks:add https://github.com/KinnTech/heroku-buildpack-apt --app wttr-in
+   bld buildpacks:add https://github.com/grauwoelfchen/heroku-buildpack-make --app wttr-in
+   bld buildpacks:add https://github.com/usiegl00/heroku-buildpack-dbip-lite --app wttr-in
+   ```
+
+3. Push to deploy:
+
+   ```
+   git push bld main
+   ```
+
+4. Once the build finishes, check the dyno and open the app:
+
+   ```
+   bld ps -a wttr-in
+   bld apps:info -a wttr-in -j | jq -r '.web_url'
+   ```
+
 ## wttr.in usage stats
 
 As of April 2026, *wttr.in* handles around 100 million queries per day from 400,000 to 450,000 users, according to the access logs.
